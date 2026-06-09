@@ -1,50 +1,151 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# ILI Re-Route Processing Demo Constitution
+
+# ILI Re-Routing Prototype Constitution
+
+## Project Structure Rules
+
+The entire application MUST be implemented under the /demo-app directory.
+
+All backend, frontend, and storage components MUST live inside this root.
+
+No code or runtime artifacts may exist outside /demo-app.
+
+---
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. FastAPI as the Orchestration Layer
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+FastAPI is responsible for:
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+* receiving uploaded files
+* submitting files to FME
+* receiving FME results
+* displaying results in the web UI
+* publishing approved results into the published CSV store
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+FastAPI MUST NOT perform centerline re-routing or geometry calculations.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+---
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### II. FME as the Processing Engine
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+FME is responsible for:
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+* centerline re-routing
+* geometry updates
+* coordinate recalculation
+* generating the final output dataset
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+All spatial processing logic resides in FME.
+
+---
+
+### III. User Review Before Publish
+
+Users must be able to review FME results before publishing.
+
+The application must display:
+
+* updated centerline geometry
+* updated feature locations
+* updated measures and coordinates
+
+Publishing is a user action that copies the final CSV into the /published directory.
+
+### IV. CSV Is the System of Record
+
+After FME processing completes, the final CSV is the authoritative output for the prototype.
+
+The prototype must:
+
+* store the processed CSV as the main persisted artifact
+* keep the original upload separate from the processed output
+* write the approved final CSV into /published on publish
+* avoid relational database persistence, SQL access, ORM layers, and migrations
+
+---
+
+## Workflow
+
+### Upload
+
+The user uploads either:
+
+* GeoPackage (.gpkg)
+* CSV
+
+containing re-route information.
+
+---
+
+### Process
+
+The application sends uploaded files to FME.
+
+FME performs:
+
+* centerline re-routing
+* geometry updates
+* feature relocation
+* coordinate recalculation
+
+FME returns a CSV containing:
+
+* updated centerline information
+* updated features
+* updated measures
+* updated latitude and longitude values
+
+---
+
+### Review
+
+The web application displays:
+
+* the updated centerline on a map
+* updated features on a map
+* attribute data from the FME output
+
+The user can inspect the results before publishing.
+
+---
+
+### Publish
+
+When the user clicks **Publish**:
+
+* the final CSV is copied into the /published directory
+* the published CSV becomes the source of truth for the updated route
+
+---
+
+## Deliverables
+
+The prototype must demonstrate:
+
+1. File upload from a web UI
+2. Submission of files to FME
+3. FME processing and output generation
+4. Display of processed results on a map
+5. User-triggered publishing to a /published CSV directory
+
+---
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This project is a proof of concept intended to demonstrate the end-to-end workflow.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Priority is placed on:
+
+* working functionality
+* rapid development
+* demonstrable business value
+* CSV-first persistence
+
+Production-grade concerns such as security, scalability, auditing, resiliency, SQL persistence, ORM design, and migration tooling are outside the scope of this prototype unless required for the demonstration.
+
+---
+
+**Version:** 0.1.0
+**Type:** Proof of Concept / Hackathon Prototype
